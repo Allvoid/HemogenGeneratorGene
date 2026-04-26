@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace HemogenGeneratorGene
@@ -15,23 +16,33 @@ namespace HemogenGeneratorGene
         {
             base.Tick();
 
-            if (!Active || pawn?.Dead != false) return;
+            if (!Active || pawn?.Dead != false)
+                return;
 
             var hemogen = pawn.genes?.GetFirstGeneOfType<Gene_Hemogen>();
-            if (hemogen == null || hemogen.Value >= hemogen.Max) return;
+            if (hemogen == null)
+                return;
 
             float perTick = HemogenPerDay / TicksPerDay;
             hemogenBuffer += perTick;
 
             if (hemogenBuffer >= 0.001f)
             {
-                float toAdd = UnityEngine.Mathf.Min(
-                    hemogenBuffer,
-                    hemogen.Max - hemogen.Value
-                );
+                float roomLeft = Mathf.Max(0f, hemogen.Max - hemogen.Value);
 
-                hemogen.Value += toAdd;
-                hemogenBuffer -= toAdd;
+                if (roomLeft > 0f)
+                {
+                    float toAdd = Mathf.Min(hemogenBuffer, roomLeft);
+                    hemogen.Value += toAdd;
+                    hemogenBuffer -= toAdd;
+                }
+
+
+                // Предотвращение сверхнакапливания
+                if (hemogen.Value >= hemogen.Max)
+                {
+                    hemogenBuffer = 0f;
+                }
             }
         }
 
